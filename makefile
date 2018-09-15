@@ -13,7 +13,6 @@ clean:
 	xcodebuild clean -configuration Debug
 	xcodebuild clean -configuration Release
 	
-	
 .PHONY: install
 install:
-	sudo cp $(BUILDDIR)/$(BINARY) /usr/bin
+	sudo cp $(BUILDDIR)/Release/$(BINARY) /usr/bin
