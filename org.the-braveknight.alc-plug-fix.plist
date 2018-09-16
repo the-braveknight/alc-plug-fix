@@ -7,14 +7,14 @@
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
-	<false/>
+	<true/>
 	<key>Program</key>
 	<string>/usr/bin/alc-plug-fix</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>/usr/bin/alc-plug-fix</string>
 		<string>--config</string>
-		<string>/Library/LaunchDaemons/alc-plug-fix_alc235.plist</string>
+		<string>/Users/zaid/alc-plug-fix/alc-plug-fix_alc235.plist</string>
 	</array>
 	<key>StandardOutPath</key>
 	<string>/var/log/alc-plug-fix.log</string>

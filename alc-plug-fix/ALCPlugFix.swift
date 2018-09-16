@@ -8,14 +8,14 @@
 
 import Foundation
 
-class ALCPlugFix: OutputDeviceListenerDelegate {
-    private let listener = OutputDeviceListener()
+class ALCPlugFix: HeadphonesListenerDelegate {
+    private let listener = HeadphonesListener()
     let hdaVerbCommands: [HDAVerb.Command]
         
     init(configFileUrl: URL) throws {
         self.hdaVerbCommands = try HDAVerb.commands(forConfigFileAt: configFileUrl)
         listener.delegate = self
-        print("Parsed \(hdaVerbCommands.count) verb commands.")
+        print("Number of commands: \(hdaVerbCommands.count).")
     }
     
     func start() {
@@ -23,26 +23,19 @@ class ALCPlugFix: OutputDeviceListenerDelegate {
         listener.startListening()
     }
     
-    func outputDeviceListener(_ outputDeviceListener: OutputDeviceListener, outputDeviceDidChangeTo newOutputDevice: OutputDevice) {
-        switch newOutputDevice {
-        case .speakers:
-            hdaVerbCommands.filter { $0.onUnplug }.forEach { command in
-                HDAVerb.main.perform(command: command) { output in
-                    if let comment = command.comment {
-                        print("Performing command: \(comment)")
-                    }
-                }
+    func headphonesListener(_ headphonesListener: HeadphonesListener, didPlugHeadphonesAt date: Date) {
+        hdaVerbCommands.filter { $0.onPlug }.forEach { command in perform(command: command, at: date) }
+    }
+    
+    func headphonesListener(_ headphonesListener: HeadphonesListener, didUnplugHeadphonesAt date: Date) {
+        hdaVerbCommands.filter { $0.onUnplug }.forEach { command in perform(command: command, at: date) }
+    }
+    
+    func perform(command: HDAVerb.Command, at date: Date) {
+        HDAVerb.main.perform(command: command) { _ in
+            if let comment = command.comment {
+                print("\(date) - Performing command: \(comment).")
             }
-        case .headphones:
-            hdaVerbCommands.filter { $0.onPlug }.forEach { command in
-                HDAVerb.main.perform(command: command) { output in
-                    if let comment = command.comment {
-                        print("Performing command: \(comment)")
-                    }
-                }
-            }
-        case .other:
-            break
         }
     }
 }

@@ -1,5 +1,5 @@
 //
-//  OutputDeviceListener.swift
+//  HeadphonesListener.swift
 //  alc-plug-fix
 //
 //  Created by Zaid Rahawi on 9/14/18.
@@ -9,21 +9,17 @@
 import Foundation
 import CoreAudio
 
-enum OutputDevice: UInt32 {
+protocol HeadphonesListenerDelegate: class {
+    func headphonesListener(_ headphonesListener: HeadphonesListener, didPlugHeadphonesAt date: Date)
+    func headphonesListener(_ headphonesListener: HeadphonesListener, didUnplugHeadphonesAt date: Date)
+}
+
+enum AudioOutputDevice: UInt32 {
     case speakers = 1769173099
     case headphones = 1751412846
-    case other = 0
-    
-    init(dataSourceId: UInt32) {
-        self = OutputDevice(rawValue: dataSourceId) ?? .other
-    }
 }
 
-protocol OutputDeviceListenerDelegate: class {
-    func outputDeviceListener(_ outputDeviceListener: OutputDeviceListener, outputDeviceDidChangeTo newOutputDevice: OutputDevice)
-}
-
-class OutputDeviceListener {
+class HeadphonesListener {
     private var defaultDevice: AudioDeviceID = 0
     private var defaultSize = UInt32(MemoryLayout<AudioObjectID>.size)
     
@@ -32,13 +28,13 @@ class OutputDeviceListener {
     
     private var dataSourceId: UInt32 = 0
     
-    weak var delegate: OutputDeviceListenerDelegate?
+    weak var delegate: HeadphonesListenerDelegate?
     
-    var currentOutputDevice: OutputDevice {
-        return OutputDevice(dataSourceId: dataSourceId)
+    var currentOutputDevice: AudioOutputDevice? {
+        return AudioOutputDevice(rawValue: dataSourceId)
     }
     
-    private let queue = DispatchQueue(label: "OutputDeviceListener", qos: .background)
+    private let queue = DispatchQueue(label: "HeadphonesListener", qos: .utility)
     
     init() {
         AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &defaultAddress, 0, nil, &defaultSize, &defaultDevice)
@@ -51,6 +47,10 @@ class OutputDeviceListener {
     private func handlePropertyEvent(numberOfAddresses: UInt32, address: UnsafePointer<AudioObjectPropertyAddress>) {
         AudioObjectGetPropertyData(defaultDevice, address, 0, nil, &defaultSize, &dataSourceId)
         
-        delegate?.outputDeviceListener(self, outputDeviceDidChangeTo: currentOutputDevice)
+        switch currentOutputDevice {
+        case .headphones?: delegate?.headphonesListener(self, didPlugHeadphonesAt: Date())
+        case .speakers?: delegate?.headphonesListener(self, didUnplugHeadphonesAt: Date())
+        case .none: break
+        }
     }
 }
